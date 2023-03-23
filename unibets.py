@@ -6,7 +6,7 @@ from io import BytesIO
 from PIL import Image
 
 # 画像を取得するためのAPIエンドポイント
-API_ENDPOINT = "https://api.unsplash.com/photos/random?client_id=YOUR_ACCESS_KEY"
+API_ENDPOINT = "https://api.unsplash.com/photos/random?client_id=AbkbZ5qQ-hd5bzJ1nZ4NB7Ko8F6D8__ALTS0F8jXOko"
 
 # ランダムな画像を取得するための関数
 def get_random_image():
