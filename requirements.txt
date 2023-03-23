@@ -4,3 +4,7 @@ pandas
 opencv-python-headless
 Pillow
 streamlit_option_menu==0.3.2
+
+requests
+BytesIO
+Image
