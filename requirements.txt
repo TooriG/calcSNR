@@ -1,9 +1,4 @@
-streamlit
-numpy
-pandas
-opencv-python-headless
-Pillow
-streamlit_option_menu==0.3.2
-requests
-beautifulsoup4
-
+streamlit==1.1.0
+requests==2.25.1
+beautifulsoup4==4.9.3
+pillow==8.2.0
