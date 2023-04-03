@@ -15,7 +15,7 @@ search_word = st.text_input("Search Images", "cat")
 # 検索ボタンを押下した時の処理
 if st.button("Search"):
     # APIから画像の情報を取得
-    url = f"https://pixabay.com/api/?key="https://api.unsplash.com/photos/random?client_id=AbkbZ5qQ-hd5bzJ1nZ4NB7Ko8F6D8__ALTS0F8jXOko"&q={search_word}&image_type=photo&per_page={per_page}&page={page}"
+    url = f"https://pixabay.com/api/?key=https://api.unsplash.com/photos/random?client_id=AbkbZ5qQ-hd5bzJ1nZ4NB7Ko8F6D8__ALTS0F8jXOko&q={search_word}&image_type=photo&per_page={per_page}&page={page}"
     res = requests.get(url)
     data = res.json()
     
