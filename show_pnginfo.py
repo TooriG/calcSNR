@@ -18,7 +18,6 @@ if uploaded_file:
 
 
         if 'parameters' in metadata:
-            st.subheader("Parameters")
             parameters = metadata['parameters']
             st.text_area("Parameters:", value=parameters, height=600)
             st.write("上のテキストをコピーしてください")
