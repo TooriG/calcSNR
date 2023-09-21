@@ -19,8 +19,14 @@ if uploaded_file:
     
     with col1:
         st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-    
+
     with col2:
+        if 'parameters' in metadata:
+            st.subheader("Parameters")
+            parameters = metadata['parameters']
+            st.text_area("Parameters:", value=parameters, height=150)
+            st.write("上のテキストをコピーしてください")
+            
         if "comment" in metadata:
             st.subheader("Comment")
             st.write(metadata["comment"])
