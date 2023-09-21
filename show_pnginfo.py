@@ -31,7 +31,7 @@ if uploaded_file:
 
         if 'parameters' in metadata:
             parameters = metadata['parameters']
-            st.text_area("Parameters:", value=parameters, height=600)
+            st.text_area("Parameters:", value=parameters, height=400)
             st.write("上のテキストをコピーしてください")
             
         if "comment" in metadata:
