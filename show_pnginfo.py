@@ -1,5 +1,6 @@
 import streamlit as st
 from PIL import Image
+import io
 
 def extract_png_info(image_path):
     """PNG画像からメタデータを抽出する関数"""
