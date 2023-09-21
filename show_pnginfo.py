@@ -12,11 +12,15 @@ st.title("PNG Metadata Extractor")
 uploaded_file = st.file_uploader("PNG画像をアップロードしてください", type=["png"])
 
 if uploaded_file:
-    st.image(uploaded_file, caption="アップロードされた画像", use_column_width=True)
-    
     with st.spinner("メタデータを抽出中..."):
         metadata = extract_png_info(uploaded_file)
         
+    col1, col2 = st.beta_columns(2)
+    
+    with col1:
+        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
+    
+    with col2:
         if "comment" in metadata:
             st.subheader("Comment")
             st.write(metadata["comment"])
