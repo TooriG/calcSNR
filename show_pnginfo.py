@@ -54,11 +54,11 @@ if uploaded_file:
             st.subheader("Software")
             st.write(metadata["software"])
 
-        # メタデータを削除した画像をダウンロードボタンとして提供
-        image_bytes = remove_metadata_and_get_bytes(uploaded_file)
-        st.download_button("メタデータを削除した画像をダウンロード", image_bytes, file_name="image_without_metadata.png", mime="image/png")
-        
-        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-        
-        st.subheader("All Metadata")
-        st.write(metadata)
+# メタデータを削除した画像をダウンロードボタンとして提供
+image_bytes = remove_metadata_and_get_bytes(uploaded_file)
+st.download_button("メタデータを削除した画像をダウンロード", image_bytes, file_name="image_without_metadata.png", mime="image/png")
+
+st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
+
+st.subheader("All Metadata")
+st.write(metadata)
