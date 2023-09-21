@@ -14,13 +14,9 @@ uploaded_file = st.file_uploader("PNG画像をアップロードしてくださ�
 if uploaded_file:
     with st.spinner("メタデータを抽出中..."):
         metadata = extract_png_info(uploaded_file)
-        
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
 
-    with col2:
+
+
         if 'parameters' in metadata:
             st.subheader("Parameters")
             parameters = metadata['parameters']
@@ -46,6 +42,9 @@ if uploaded_file:
         if "software" in metadata:
             st.subheader("Software")
             st.write(metadata["software"])
+
+        
+        st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
         
         st.subheader("All Metadata")
         st.write(metadata)
