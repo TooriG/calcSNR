@@ -25,16 +25,16 @@ st.title("PNG Metadata Extractor for Multiple Images")
 
 uploaded_files = st.file_uploader("複数のPNG画像をアップロードしてください", type=["png"], accept_multiple_files=True)
 
-metadata_exists = False
 if uploaded_files:
+    all_images_lack_metadata = True
     for uploaded_file in uploaded_files:
         metadata = extract_png_info(uploaded_file)
         if 'parameters' in metadata:
-            metadata_exists = True
+            all_images_lack_metadata = False
             break
 
-    if not metadata_exists:
-        st.error("すべての画像にメタデータが存在しません")
+    if all_images_lack_metadata:
+        st.error("すべての画像にメタデータが存在しません。")
 
     else:
         zip_buffer = io.BytesIO()
@@ -45,17 +45,18 @@ if uploaded_files:
         zip_buffer.seek(0)
         st.download_button("メタデータを削除した画像を一括ダウンロード", zip_buffer, file_name="images_without_metadata.zip", mime="application/zip")
     
-    for uploaded_file in uploaded_files:
-        metadata = extract_png_info(uploaded_file)
+    for i in range(0, len(uploaded_files), 2):
         col1, col2 = st.columns(2)
         
         with col1:
-            st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-        
-        with col2:
-            if 'parameters' in metadata:
-                st.subheader("Parameters for " + uploaded_file.name)
-                parameters = metadata['parameters']
-                st.text_area("", value=parameters, height=200, max_chars=None)
-            else:
-                st.write("この画像にはメタデータが存在しません。")
+            metadata1 = extract_png_info(uploaded_files[i])
+            st.image(uploaded_files[i], caption="Uploaded Image.", use_column_width=True)
+            if 'parameters' in metadata1:
+                st.text_area("", value=metadata1['parameters'], height=200, max_chars=None)
+
+        if i + 1 < len(uploaded_files):  # 画像が奇数の場合、最後の列を確認
+            with col2:
+                metadata2 = extract_png_info(uploaded_files[i + 1])
+                st.image(uploaded_files[i + 1], caption="Uploaded Image.", use_column_width=True)
+                if 'parameters' in metadata2:
+                    st.text_area("", value=metadata2['parameters'], height=200, max_chars=None)
