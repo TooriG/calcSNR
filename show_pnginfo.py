@@ -1,48 +1,46 @@
 import streamlit as st
-import os
-from PIL import Image, PngImagePlugin
+import png
+import io
+import zipfile
 
-# メタデータの取得
-def get_png_info(image):
-    if "png" in image.format.lower():
-        return {k: v for k, v in image.info.items() if isinstance(v, (bytes, str))}
-    return {}
+def remove_png_metadata(png_bytes):
+    reader = png.Reader(bytes=png_bytes)
+    chunks = reader.chunks()
+    new_chunks = [(chunk_type, data) for chunk_type, data in chunks if chunk_type not in ('tEXt', 'zTXt', 'iTXt')]
+    f = io.BytesIO()
+    png.write_chunks(f, new_chunks)
+    return f.getvalue()
 
-# メタデータを削除して画像を保存
-def save_without_metadata(image, save_path):
-    image = image.convert("RGBA")
-    clean_image = Image.new("RGBA", image.size)
-    clean_image.paste(image)
-    clean_image.save(save_path, "PNG")
+def get_png_metadata(png_bytes):
+    reader = png.Reader(bytes=png_bytes)
+    chunks = reader.chunks()
+    metadata_chunks = [(chunk_type, data) for chunk_type, data in chunks if chunk_type in ('tEXt', 'zTXt', 'iTXt')]
+    return metadata_chunks
 
-st.title("PNGメタデータ表示・削除ツール")
+st.title('PNGメタデータツール')
 
-uploaded_files = st.file_uploader("PNG画像をアップロードしてください", type="png", accept_multiple_files=True)
+uploaded_files = st.file_uploader('PNG画像をアップロードしてください', type=['png'], accept_multiple_files=True)
 
 if uploaded_files:
-    has_metadata = False
+    all_files_without_metadata = []
+    metadata_found = False
     for uploaded_file in uploaded_files:
-        st.write(f"ファイル名: {uploaded_file.name}")
-        with Image.open(uploaded_file) as img:
-            info = get_png_info(img)
-            if info:
-                has_metadata = True
-                st.write(info)
-            else:
-                st.write("この画像にはPNGメタデータがありません")
+        content = uploaded_file.getvalue()
+        metadata = get_png_metadata(content)
+        if metadata:
+            metadata_found = True
+            for chunk_type, data in metadata:
+                st.write(f"File: {uploaded_file.name}, Chunk: {chunk_type}, Data: {data.decode('utf-8')}")
+        all_files_without_metadata.append((uploaded_file.name, remove_png_metadata(content)))
 
-    if not has_metadata:
-        st.warning("すべての画像にPNGメタデータがありません")
-    else:
-        save_dir = "/tmp/cleaned_images"
-        os.makedirs(save_dir, exist_ok=True)
-        paths = []
-        for uploaded_file in uploaded_files:
-            with Image.open(uploaded_file) as img:
-                save_path = os.path.join(save_dir, uploaded_file.name)
-                save_without_metadata(img, save_path)
-                paths.append(save_path)
+    if not metadata_found:
+        st.warning('すべての画像にPngメタデータがありません')
 
-        st.write("メタデータを削除した画像をダウンロード:")
-        for p in paths:
-            st.download_button(f"{os.path.basename(p)}をダウンロード", p, "application/png")
+    # Create zip file with images without metadata
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED, False) as zip_file:
+        for file_name, data in all_files_without_metadata:
+            zip_file.writestr(file_name, data)
+
+    zip_buffer.seek(0)
+    st.download_button('メタデータを削除した画像をダウンロード', zip_buffer, 'without_metadata.zip')
