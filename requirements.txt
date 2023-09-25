@@ -1,4 +1,2 @@
-streamlit==1.2.0
-pypng==0.0.21
-pillow==9.0.0
-purepng==0.2.3
+streamlit
+Pillow
