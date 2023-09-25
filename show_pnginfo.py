@@ -1,55 +1,34 @@
 import streamlit as st
-import os
-import shutil
-import tempfile
 from PIL import Image
+import io
+import zipfile
 
-# 画像のメタデータを削除する関数
-def remove_metadata(img_path):
-    with Image.open(img_path) as image:
-        image_data = image.tobytes()
-        image_without_metadata = Image.frombytes(image.mode, image.size, image_data)
-        image_without_metadata.save(img_path)
+st.title('PNG Metadata Remover')
 
-# アプリのタイトル
-st.title("PNG Metadata Remover")
-
-# 複数の画像をアップロード
-uploaded_files = st.file_uploader("PNG画像をアップロードしてください", type="png", accept_multiple_files=True)
+uploaded_files = st.file_uploader("PNG画像をアップロードしてください", type=['png'], accept_multiple_files=True)
 
 if uploaded_files:
-    metadata_found = False
+    images_without_metadata = []
+    metadata_detected = False
+    
+    for uploaded_file in uploaded_files:
+        with Image.open(uploaded_file) as img:
+            # メタデータを削除
+            if img.info:
+                metadata_detected = True
+            data = io.BytesIO()
+            img.save(data, format="PNG")
+            images_without_metadata.append((uploaded_file.name, data.getvalue()))
 
-    # 一時ディレクトリを作成
-    temp_dir = tempfile.mkdtemp()
-
-    for file in uploaded_files:
-        # 画像の情報を表示
-        with Image.open(file) as image:
-            st.write(f"File: {file.name}")
-            st.write("Size:", image.size)
-            st.write("Mode:", image.mode)
-            if image.info:
-                metadata_found = True
-                st.write("Metadata:", image.info)
-            else:
-                st.write("This image has no metadata.")
-            st.image(image, caption=file.name, use_column_width=True)
+    if metadata_detected:
+        st.write('メタデータを検出しました。ダウンロード準備中...')
         
-        # メタデータを削除して一時ディレクトリに保存
-        file_path = os.path.join(temp_dir, file.name)
-        with open(file_path, "wb") as f:
-            f.write(file.getvalue())
-        remove_metadata(file_path)
-
-    # メタデータが見つかった場合、ダウンロードボタンを表示
-    if metadata_found:
-        with st.spinner("Creating a downloadable zip..."):
-            # 画像をzipファイルにパッケージング
-            shutil.make_archive("/tmp/images_without_metadata", 'zip', temp_dir)
-        st.download_button(label="PNGメタデータを削除した画像をダウンロード", data="/tmp/images_without_metadata.zip", file_name="images_without_metadata.zip")
+        # すべての画像をZIPファイルにまとめる
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as z:
+            for name, data in images_without_metadata:
+                z.writestr(name, data)
+        
+        st.download_button('ダウンロード', zip_buffer.getvalue(), 'images_without_metadata.zip')
     else:
-        st.error("すべての画像にPngメタデータがありません")
-
-    # 一時ディレクトリを削除
-    shutil.rmtree(temp_dir)
+        st.warning('すべての画像にPNGメタデータがありません')
