@@ -1,47 +1,51 @@
 import streamlit as st
-from PIL import Image
+import os
 import io
+from purepng import png
 
-def extract_png_info(image_path):
-    """PNG画像からメタデータを抽出する関数"""
-    with Image.open(image_path) as img:
-        info = img.info
+def remove_metadata_from_png(png_data):
+    reader = png.Reader(bytes=png_data)
+    d = reader.asDirect()
+    out = io.BytesIO()
+    w = png.Writer(d[0], d[1], greyscale=d[3]['greyscale'], alpha=d[3]['alpha'], bitdepth=d[3]['bitdepth'])
+    w.write(out, d[2])
+    return out.getvalue()
+
+def extract_png_info(png_data):
+    info = []
+    for chunk in png.Reader(bytes=png_data).chunks():
+        if chunk[0] == b'tEXt':
+            info.append(chunk[1].decode('latin1'))
     return info
 
-def remove_metadata_and_get_bytes(image_path):
-    """画像からメタデータを削除して、バイトデータを返す関数"""
-    with Image.open(image_path) as img:
-        # メタデータを削除
-        data = list(img.getdata())
-        img_without_metadata = Image.new(img.mode, img.size)
-        img_without_metadata.putdata(data)
-        
-        # 画像をバイトデータとして保存
-        byte_io = io.BytesIO()
-        img_without_metadata.save(byte_io, format="PNG")
-    return byte_io.getvalue()
+st.title("PNG Metadata Extractor & Remover")
 
-st.title("PNG Metadata Extractor")
+uploaded_files = st.file_uploader("Upload PNG files", type=["png"], accept_multiple_files=True)
 
-uploaded_file = st.file_uploader("PNG画像をアップロードしてください", type=["png"])
-
-if uploaded_file:
-    with st.spinner("メタデータを抽出中..."):
-        metadata = extract_png_info(uploaded_file)
+if uploaded_files:
+    meta_info_found = False
+    cleaned_files = {}
     
-    if 'parameters' in metadata:
-        st.subheader("Parameters")
-        parameters = metadata['parameters']
-        st.markdown(f"```\n{parameters}\n```")
+    for f in uploaded_files:
+        file_bytes = f.read()
+        info = extract_png_info(file_bytes)
+        if info:
+            meta_info_found = True
+            st.write(f"**{f.name}**")
+            for i in info:
+                st.text(i)
+        cleaned_files[f.name] = remove_metadata_from_png(file_bytes)
     
-    st.subheader("PNG Info")
-    for key, value in metadata.items():
-        if key != 'parameters':
-            st.write(f"{key}: {value}")
+    if not meta_info_found:
+        st.header("すべての画像にPngメタデータがありません")
+    
+    def get_all_files():
+        with io.BytesIO() as buffer:
+            with zipfile.ZipFile(buffer, 'a', zipfile.ZIP_DEFLATED) as z:
+                for name, data in cleaned_files.items():
+                    z.writestr(name, data)
+            return buffer.getvalue()
 
-    st.subheader("Uploaded Image")
-    st.image(uploaded_file, caption="Uploaded Image.", use_column_width=True)
-    
-    # メタデータを削除した画像をダウンロードボタンとして提供
-    image_bytes = remove_metadata_and_get_bytes(uploaded_file)
-    st.download_button("メタデータを削除した画像をダウンロード", image_bytes, file_name="image_without_metadata.png", mime="image/png")
+    if st.button('Cleaned PNGs Download'):
+        files = get_all_files()
+        st.download_button("Download cleaned PNGs", files, "cleaned_pngs.zip")
