@@ -1,38 +1,41 @@
 import streamlit as st
 from PIL import Image
-import io
 import zipfile
+import io
+import os
 
-# 画像をリサイズする関数
-def resize_image(image):
-    original_image = Image.open(image)
-    size = (original_image.width * 2, original_image.height * 2)
-    resized_image = original_image.resize(size, Image.Resampling.LANCZOS)
-    return resized_image
+# Function to resize image
+def resize_image(image_path):
+    with Image.open(image_path) as img:
+        img = img.resize((img.width * 2, img.height * 2), Image.Resampling.LANCZOS)
+        img_byte_arr = io.BytesIO()
+        img.save(img_byte_arr, format=img.format)
+        img_byte_arr = img_byte_arr.getvalue()
+    return img_byte_arr
 
-# Streamlit UI
-st.title('画像リサイズアプリ')
+st.title('Folder Image Resizer')
 
-uploaded_files = st.file_uploader("画像をアップロードしてください", type=['jpg', 'png'], accept_multiple_files=True)
+# File uploader for ZIP files
+uploaded_files = st.file_uploader("Upload ZIP files containing image folders", accept_multiple_files=True, type=['zip'])
 
 if uploaded_files:
-    # Zipファイルの作成
     zip_buffer = io.BytesIO()
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_out:
         for uploaded_file in uploaded_files:
-            # 画像をリサイズ
-            image = resize_image(uploaded_file)
-            # メモリ内のバッファに画像を保存
-            img_buffer = io.BytesIO()
-            image.save(img_buffer, format='PNG')
-            img_buffer.seek(0)
-            # Zipファイルに追加
-            zip_file.writestr(uploaded_file.name, img_buffer.read())
+            with zipfile.ZipFile(uploaded_file, 'r') as zip_in:
+                for file in zip_in.namelist():
+                    # Check if the file is an image
+                    if file.lower().endswith(('.png', '.jpg', '.jpeg')):
+                        with zip_in.open(file) as img_file:
+                            # Resize image and get byte data
+                            img_data = resize_image(img_file)
+                            # Write the resized image to the output ZIP
+                            zip_out.writestr(file, img_data)
 
-    # ユーザーにダウンロード用のリンクを提供
+    # Reset buffer position and create download button
     zip_buffer.seek(0)
     st.download_button(
-        label="画像をダウンロード",
+        label="Download Resized Images",
         data=zip_buffer,
         file_name="resized_images.zip",
         mime="application/zip"
