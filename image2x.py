@@ -6,9 +6,11 @@ import zipfile
 # 画像をリサイズする関数
 def resize_image(image_file):
     with Image.open(image_file) as original_image:
+        original_format = original_image.format
+
         # PNG metadataのコピー（PngInfoオブジェクトを使用）
         metadata = PngImagePlugin.PngInfo()
-        if original_image.format == 'PNG':
+        if original_format == 'PNG':
             for k, v in original_image.info.items():
                 metadata.add_text(k, v)
 
@@ -17,12 +19,12 @@ def resize_image(image_file):
 
         # メモリ内のバッファに画像を保存
         img_buffer = io.BytesIO()
-        if resized_image.format == 'PNG':
+        if original_format == 'PNG':
             # PNG metadataを保持しながら保存
             resized_image.save(img_buffer, format='PNG', pnginfo=metadata)
         else:
-            # 他のフォーマットの場合はフォーマットを指定して保存
-            resized_image.save(img_buffer, format=resized_image.format)
+            # 他のフォーマットの場合は元のフォーマットを使用して保存
+            resized_image.save(img_buffer, format=original_format)
         img_buffer.seek(0)
 
     return img_buffer
