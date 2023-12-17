@@ -6,9 +6,10 @@ import zipfile
 # 画像をリサイズする関数
 def resize_image(image):
     original_image = Image.open(image)
+    metadata = original_image.info  # PNGメタデータを取得
     size = (original_image.width * 2, original_image.height * 2)
     resized_image = original_image.resize(size, Image.Resampling.LANCZOS)
-    return resized_image
+    return resized_image, metadata
 
 # Streamlit UI
 st.title('画像リサイズアプリ')
@@ -20,11 +21,14 @@ if uploaded_files:
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
         for uploaded_file in uploaded_files:
-            # 画像をリサイズ
-            image = resize_image(uploaded_file)
+            # 画像をリサイズし、メタデータを取得
+            image, metadata = resize_image(uploaded_file)
             # メモリ内のバッファに画像を保存
             img_buffer = io.BytesIO()
-            image.save(img_buffer, format='PNG')
+            if uploaded_file.name.lower().endswith('.png'):
+                image.save(img_buffer, format='PNG', **metadata)  # PNGメタデータを適用
+            else:
+                image.save(img_buffer, format='PNG')
             img_buffer.seek(0)
             # Zipファイルに追加
             zip_file.writestr(uploaded_file.name, img_buffer.read())
