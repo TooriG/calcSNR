@@ -33,8 +33,8 @@ if uploaded_files:
                 # PNG metadataを保持しながら保存
                 image.save(img_buffer, format='PNG', pnginfo=metadata)
             else:
-                # PNG以外の場合、通常の保存処理
-                image.save(img_buffer, format=image.format)
+                # 他のフォーマットの場合はフォーマットを指定して保存
+                image.save(img_buffer, format='JPEG')
             img_buffer.seek(0)
             # Zipファイルに追加
             zip_file.writestr(uploaded_file.name, img_buffer.read())
