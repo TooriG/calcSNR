@@ -3,51 +3,64 @@ from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
 
-# RGBチャネルのヒストグラムを計算する関数
-def calculate_histograms(image):
-    # NumPy配列に変換
+# RGBチャネルのヒストグラムと統計情報を計算する関数
+def analyze_color_image(image):
+    # NumPy配列にする
     image_array = np.array(image)
 
-    # RGBチャネルごとのヒストグラムを計算
-    red_hist, bins = np.histogram(image_array[:,:,0], bins=256, range=[0,256])
-    green_hist, _ = np.histogram(image_array[:,:,1], bins=256, range=[0,256])
-    blue_hist, _ = np.histogram(image_array[:,:,2], bins=256, range=[0,256])
-    
-    return red_hist, green_hist, blue_hist, bins
+    # RGBチャネルを分割
+    red_channel = image_array[:, :, 0]
+    green_channel = image_array[:, :, 1]
+    blue_channel = image_array[:, :, 2]
 
-# ヒストグラムを表示する関数
-def plot_histograms(red_hist, green_hist, blue_hist, bins):
-    plt.figure(figsize=(10, 4))
-    plt.title('Color Histogram')
-    plt.xlabel('Pixel Value')
-    plt.ylabel('Frequency')
+    # RGBチャネルの平均と標準偏差を計算
+    mean_red, std_red = np.mean(red_channel), np.std(red_channel)
+    mean_green, std_green = np.mean(green_channel), np.std(green_channel)
+    mean_blue, std_blue = np.mean(blue_channel), np.std(blue_channel)
 
-    plt.bar(bins[:-1] - 0.75, red_hist, color='red', alpha=0.6, label='Red', width=0.5)
-    plt.bar(bins[:-1] - 0.25, green_hist, color='green', alpha=0.6, label='Green', width=0.5)
-    plt.bar(bins[:-1] + 0.25, blue_hist, color='blue', alpha=0.6, label='Blue', width=0.5)
-    
-    plt.legend()
-    return plt
+    # RGBチャネルのヒストグラムを計算（256階調）
+    histogram_red, _ = np.histogram(red_channel, bins=256, range=(0, 256))
+    histogram_green, _ = np.histogram(green_channel, bins=256, range=(0, 256))
+    histogram_blue, _ = np.histogram(blue_channel, bins=256, range=(0, 256))
+
+    return (mean_red, std_red, histogram_red), (mean_green, std_green, histogram_green), (mean_blue, std_blue, histogram_blue)
 
 # Streamlitアプリケーションのメイン関数
 def main():
-    st.title('Color Image Histogram Analysis')
+    st.title('Color Image Analysis App')
 
     # 複数の画像のアップロード
-    uploaded_files = st.file_uploader("Please upload color images", type=["jpg", "png"], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Please upload images", type=["jpg", "png"], accept_multiple_files=True)
     
     for uploaded_file in uploaded_files:
-        # カラムを作成して、画像とヒストグラムを横に表示
+        # カラムを作成して、画像と分析結果を横に表示
         col1, col2 = st.columns(2)
         
         with col1:  # 画像の表示
             image = Image.open(uploaded_file)
             st.image(image, caption=f'Uploaded Image: {uploaded_file.name}', use_column_width=True)
         
-        with col2:  # ヒストグラムの表示
-            red_hist, green_hist, blue_hist, bins = calculate_histograms(image)
-            plt = plot_histograms(red_hist, green_hist, blue_hist, bins)
-            st.pyplot(plt)
+        with col2:  # 画像分析と結果の表示
+            # RGBチャネルの分析
+            (mean_red, std_red, histogram_red), \
+            (mean_green, std_green, histogram_green), \
+            (mean_blue, std_blue, histogram_blue) = analyze_color_image(image)
+
+            # 平均と標準偏差の表示
+            st.write(f"Mean Red: {mean_red:.2f}, Std Red: {std_red:.2f}")
+            st.write(f"Mean Green: {mean_green:.2f}, Std Green: {std_green:.2f}")
+            st.write(f"Mean Blue: {mean_blue:.2f}, Std Blue: {std_blue:.2f}")
+
+            # ヒストグラムを表示
+            fig, ax = plt.subplots()
+            ax.plot(histogram_red, color='red', label='Red Channel')
+            ax.plot(histogram_green, color='green', label='Green Channel')
+            ax.plot(histogram_blue, color='blue', label='Blue Channel')
+            ax.set_title('Color Histogram')
+            ax.set_xlabel('Pixel Intensity')
+            ax.set_ylabel('Frequency')
+            ax.legend()
+            st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
