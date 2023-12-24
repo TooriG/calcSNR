@@ -19,31 +19,31 @@ def analyze_image(image):
 
 # Streamlitアプリケーションのメイン関数
 def main():
-    st.title('画像分析アプリ')
+    st.title('Image Analysis App')
 
-    # 画像のアップロード
-    uploaded_file = st.file_uploader("画像をアップロードしてください", type=["jpg", "png"])
+    # 複数の画像のアップロード
+    uploaded_files = st.file_uploader("Please upload images", type=["jpg", "png"], accept_multiple_files=True)
     
-    if uploaded_file is not None:
-        # 画像を読み込む
-        image = Image.open(uploaded_file)
-        # 画像を表示
-        st.image(image, caption='アップロードされた画像', use_column_width=True)
+    for uploaded_file in uploaded_files:
+        # カラムを作成して、画像と分析結果を横に表示
+        col1, col2 = st.columns(2)
         
-        # 画像分析
-        mean, std, histogram = analyze_image(image)
+        with col1:  # 画像の表示
+            image = Image.open(uploaded_file)
+            st.image(image, caption=f'Uploaded Image: {uploaded_file.name}', use_column_width=True)
         
-        # 分析結果を表示
-        st.write(f"平均（Mean）: {mean:.2f}")
-        st.write(f"標準偏差（Standard Deviation）: {std:.2f}")
-
-        # ヒストグラムを表示
-        fig, ax = plt.subplots()
-        ax.bar(range(256), histogram, color='gray')
-        ax.set_title('Image Histogram')
-        ax.set_xlabel('Pixel Value')
-        ax.set_ylabel('Frequency')
-        st.pyplot(fig)
+        with col2:  # 画像分析と結果の表示
+            mean, std, histogram = analyze_image(image)
+            st.write(f"Mean: {mean:.2f}")
+            st.write(f"Standard Deviation: {std:.2f}")
+            
+            # ヒストグラムを表示
+            fig, ax = plt.subplots()
+            ax.bar(range(256), histogram, color='gray')
+            ax.set_title('Image Histogram')
+            ax.set_xlabel('Pixel Value')
+            ax.set_ylabel('Frequency')
+            st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
