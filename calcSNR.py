@@ -40,9 +40,9 @@ def main():
         # ヒストグラムを表示
         fig, ax = plt.subplots()
         ax.bar(range(256), histogram, color='gray')
-        ax.set_title('画像のヒストグラム')
-        ax.set_xlabel('ピクセル値')
-        ax.set_ylabel('頻度')
+        ax.set_title('Image Histogram')
+        ax.set_xlabel('Pixel Value')
+        ax.set_ylabel('Frequency')
         st.pyplot(fig)
 
 if __name__ == "__main__":
