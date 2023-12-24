@@ -1,36 +1,54 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
+from scipy.stats import entropy
+import matplotlib.pyplot as plt
 
-# 画像のノイズを判断する関数
-def calculate_noise(image):
+# 画像のノイズ特性を計算する関数
+def analyze_image(image):
     # 画像をグレースケールに変換し、NumPy配列にする
-    image = np.array(image.convert('L'))
-    # 画像の平均と標準偏差を計算
-    mean = np.mean(image)
-    std = np.std(image)
-    # 信号対雑音比（SNR）を計算
-    snr = mean / std if std != 0 else 0
-    return snr
+    gray_image = np.array(image.convert('L'))
+
+    # 平均と標準偏差を計算
+    mean = np.mean(gray_image)
+    std = np.std(gray_image)
+
+    # ヒストグラムを計算（256階調）
+    histogram = np.histogram(gray_image, bins=256)[0]
+
+    # エントロピーを計算
+    img_entropy = entropy(histogram, base=2)
+
+    return mean, std, img_entropy, histogram
 
 # Streamlitアプリケーションのメイン関数
 def main():
-    st.title('画像ノイズ判定アプリ')
+    st.title('画像分析アプリ')
 
-    # 複数の画像のアップロード
-    uploaded_files = st.file_uploader("画像をアップロードしてください", type=["jpg", "png"], accept_multiple_files=True)
+    # 画像のアップロード
+    uploaded_file = st.file_uploader("画像をアップロードしてください", type=["jpg", "png"])
     
-    for uploaded_file in uploaded_files:
-        if uploaded_file is not None:
-            # 画像を読み込む
-            image = Image.open(uploaded_file)
-            # 画像を表示
-            st.image(image, caption='アップロードされた画像', use_column_width=True)
-            
-            # ノイズを計算
-            snr = calculate_noise(image)
-            # 結果を表示
-            st.write(f"{uploaded_file.name} の信号対雑音比 (SNR): {snr:.2f}")
+    if uploaded_file is not None:
+        # 画像を読み込む
+        image = Image.open(uploaded_file)
+        # 画像を表示
+        st.image(image, caption='アップロードされた画像', use_column_width=True)
+        
+        # 画像分析
+        mean, std, img_entropy, histogram = analyze_image(image)
+        
+        # 分析結果を表示
+        st.write(f"平均（Mean）: {mean:.2f}")
+        st.write(f"標準偏差（Standard Deviation）: {std:.2f}")
+        st.write(f"エントロピー: {img_entropy:.2f}")
+
+        # ヒストグラムを表示
+        fig, ax = plt.subplots()
+        ax.bar(range(256), histogram, color='gray')
+        ax.set_title('画像のヒストグラム')
+        ax.set_xlabel('ピクセル値')
+        ax.set_ylabel('頻度')
+        st.pyplot(fig)
 
 if __name__ == "__main__":
     main()
