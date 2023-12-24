@@ -1,7 +1,6 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
-from scipy.stats import entropy
 import matplotlib.pyplot as plt
 
 # 画像のノイズ特性を計算する関数
@@ -14,12 +13,9 @@ def analyze_image(image):
     std = np.std(gray_image)
 
     # ヒストグラムを計算（256階調）
-    histogram = np.histogram(gray_image, bins=256)[0]
+    histogram, _ = np.histogram(gray_image, bins=256)
 
-    # エントロピーを計算
-    img_entropy = entropy(histogram, base=2)
-
-    return mean, std, img_entropy, histogram
+    return mean, std, histogram
 
 # Streamlitアプリケーションのメイン関数
 def main():
@@ -35,12 +31,11 @@ def main():
         st.image(image, caption='アップロードされた画像', use_column_width=True)
         
         # 画像分析
-        mean, std, img_entropy, histogram = analyze_image(image)
+        mean, std, histogram = analyze_image(image)
         
         # 分析結果を表示
         st.write(f"平均（Mean）: {mean:.2f}")
         st.write(f"標準偏差（Standard Deviation）: {std:.2f}")
-        st.write(f"エントロピー: {img_entropy:.2f}")
 
         # ヒストグラムを表示
         fig, ax = plt.subplots()
